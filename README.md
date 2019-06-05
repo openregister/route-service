@@ -1,26 +1,22 @@
-# Route service for Register on PaaS
+# GOV.UK Registers route service
 
-One job, report to Google Analytics on every request.
+GOV.UK Registers collects usage data via Google Analytics. The route service is responsible for proxying traffic to the Registers application and sending data based on user requests to Google Analytics.
 
 ## Requirements
 
-`GOOGLE_ANALYTICS_TRACKING_ID` environment variable will need to be defined in order for the metrics to be stored approprietly. It has a form of: `UA-00000000-0`. Should be stored in the password store.
+The `GOOGLE_ANALYTICS_TRACKING_ID` environment variable will need to be defined in order for the metrics to be stored appropriately. It takes the form `UA-00000000-0` and should be stored in the password store.
 
 ## How to deploy
 
-This app can be hosted anywhere under the condition it has a public endpoint accessible.
-
-There is no reason not to host this app on GOV.UK PaaS. Ideally, it should live in the `prod` namespace.
-
-Manual deployment:
+This route service is automatically deployed to GOV.UK PaaS. However, to manually deploy it to GOV.UK PaaS:
 
 ```sh
 cf push
 ```
 
-## How to use as route service
+## Enable the route service
 
-Once the application is hosted anywhere, we can setup CloudFoundry to route traffic through the app.
+Once the route service is deployed, we can tell the PaaS to route traffic through the service.
 
 The following command will setup the configuration for the route service.
 
@@ -28,17 +24,21 @@ The following command will setup the configuration for the route service.
 cf create-user-provided-service openregister-ga-route-service -r https://openregister-ga-route-service.cloudapps.digital
 ```
 
-The following command will use the above configuration when the traffic comes to the application.
+The following command will enable the route service to proxy traffic to the destination registers application.
 
 ```sh
-cf bind-route-service cloudapps.digital openregister-ga-route-service --hostname beta-multi
+cf bind-route-service cloudapps.digital openregister-ga-route-service --hostname <name of destination app>
 ```
 
 Assuming everything went smoothly, the service should be in play and used for routing.
 
 ## Troubleshoot
 
-**Is this app running?**
+### Configuration
+
+Debug-level logging can be enabled for the route service by setting a `DEBUG` environment variable with a value of `true`. The Google Analytics URL can be overridden with the `GOOGLE_ANALYTICS_URL` environment variable.
+
+### Is the route service running?
 
 Check the status of this app by running:
 
@@ -46,7 +46,7 @@ Check the status of this app by running:
 cf app google-analytics-reporter
 ```
 
-**Is my service configured correctly?**
+### Is the route service configured correctly?
 
 Check if initial config is present.
 
@@ -54,12 +54,12 @@ Check if initial config is present.
 cf service openregister-ga-route-service
 ```
 
-Check if the routes are attached to the application.
+Check if the correct routes are attached to the application.
 
 ```sh
 cf routes
 ```
 
-**Still stuck?**
+### Still stuck?
 
 There are people working hard on [GOV.UK PaaS documentation](https://docs.cloud.service.gov.uk/deploying_services/route_services/), to deliver the best user experience possible. See if perhaps that documentation covers your problem.
