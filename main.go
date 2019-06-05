@@ -9,6 +9,7 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"os"
+	"path"
 	"strings"
 	"time"
 
@@ -17,7 +18,8 @@ import (
 )
 
 const (
-	defaultPort = "8080"
+	defaultPort               = "8080"
+	defaultGoogleAnalyticsUrl = "https://www.google-analytics.com/collect"
 
 	acceptHeader         = "Accept"
 	userAgentHeader      = "User-Agent"
@@ -84,6 +86,14 @@ func getLoggingLevel() log.Level {
 	return log.WarnLevel
 }
 
+func getGoogleAnalyticsUrl() string {
+	if url := os.Getenv("GOOGLE_ANALYTICS_URL"); len(url) != 0 {
+		return url
+	}
+
+	return defaultGoogleAnalyticsUrl
+}
+
 func newProxy(roundTripper http.RoundTripper, skipSSLValidation bool) http.Handler {
 	reverseProxy := &httputil.ReverseProxy{
 		Director:  reverseProxyDirectory,
@@ -106,14 +116,12 @@ func reverseProxyDirectory(req *http.Request) {
 	endpoint, err := composeResourceURL(req.Header, *req.URL)
 	if err != nil {
 		log.Errorf("unable to compose resource url: %s", err)
-		// TODO: Do we want the thing to be reported to Google Analytics?
-		return
 	}
 
 	go sendGARecord(endpoint, req.Header.Get(userAgentHeader))
 }
 
-func composeResourceURL(headers http.Header, u url.URL) (string, error) {
+func composeResourceURL(headers http.Header, u url.URL) (url string, err error) {
 	u.RawQuery = "" // TODO: Consider if this line needs to persist.
 
 	log.WithFields(log.Fields{
@@ -121,22 +129,27 @@ func composeResourceURL(headers http.Header, u url.URL) (string, error) {
 		"path":   u.Path,
 	}).Debug("composing new resource url")
 
-	if strings.Contains(u.Path, ".json") || strings.Contains(u.Path, ".csv") {
-		return u.String(), nil
-	}
+	accept := headers.Get(acceptHeader)
 
-	switch headers.Get(acceptHeader) {
-	case "application/json":
+	switch {
+	case strings.HasPrefix(accept, "application/json"):
 		u.Path = fmt.Sprintf("%s.json", u.Path)
-		break
-	case "text/csv":
+	case strings.HasPrefix(accept, "text/csv"):
 		u.Path = fmt.Sprintf("%s.csv", u.Path)
-		break
-	default:
-		return "", fmt.Errorf("unknown resource type")
 	}
 
-	return u.String(), nil
+	ext := path.Ext(u.Path)
+
+	switch ext {
+	case "json":
+	case "csv":
+	default:
+		err = fmt.Errorf("unknown resource type: %s", u.Path)
+	}
+
+	url = u.String()
+
+	return
 }
 
 func sendGARecord(endpoint string, useragent string) {
@@ -156,7 +169,7 @@ func sendGARecord(endpoint string, useragent string) {
 		return
 	}
 
-	req, err := http.NewRequest("POST", "https://www.google-analytics.com/collect", bytes.NewBuffer(data))
+	req, err := http.NewRequest("POST", getGoogleAnalyticsUrl(), bytes.NewBuffer(data))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Set("Content-Length", string(len(data)))
 
