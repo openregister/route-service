@@ -132,10 +132,25 @@ func composeResourceURL(headers http.Header, u url.URL) (url string, err error) 
 	accept := headers.Get(acceptHeader)
 
 	switch {
-	case strings.HasPrefix(accept, "application/json"):
+	case strings.Contains(accept, "application/json"):
 		u.Path = fmt.Sprintf("%s.json", u.Path)
-	case strings.HasPrefix(accept, "text/csv"):
+		break
+	case strings.Contains(accept, "text/csv"):
 		u.Path = fmt.Sprintf("%s.csv", u.Path)
+		break
+
+	// following are not supported, yet we want to collect metrics on them
+	case strings.Contains(accept, "text/html"):
+		u.Path = fmt.Sprintf("%s.html", u.Path)
+		break
+	case strings.Contains(accept, "text/tab-separated-values"):
+	case strings.Contains(accept, "text/tsv"):
+		u.Path = fmt.Sprintf("%s.tsv", u.Path)
+		break
+	case strings.Contains(accept, "application/x-turtle"):
+	case strings.Contains(accept, "text/ttl"):
+		u.Path = fmt.Sprintf("%s.ttl", u.Path)
+		break
 	}
 
 	ext := path.Ext(u.Path)
@@ -143,6 +158,10 @@ func composeResourceURL(headers http.Header, u url.URL) (url string, err error) 
 	switch ext {
 	case "json":
 	case "csv":
+	case "html":
+	case "tsv":
+	case "ttl":
+		break
 	default:
 		err = fmt.Errorf("unknown resource type: %s", u.Path)
 	}
