@@ -121,7 +121,7 @@ func reverseProxyDirectory(req *http.Request) {
 	go sendGARecord(endpoint, req.Header.Get(userAgentHeader))
 }
 
-func composeResourceURL(headers http.Header, u url.URL) (url string, err error) {
+func composeResourceURL(headers http.Header, u url.URL) (string, error) {
 	u.RawQuery = "" // TODO: Consider if this line needs to persist.
 
 	log.WithFields(log.Fields{
@@ -163,12 +163,10 @@ func composeResourceURL(headers http.Header, u url.URL) (url string, err error) 
 	case "ttl":
 		break
 	default:
-		err = fmt.Errorf("unknown resource type: %s", u.Path)
+		return "", fmt.Errorf("unknown resource type: %s", u.Path)
 	}
 
-	url = u.String()
-
-	return
+	return u.String(), nil
 }
 
 func sendGARecord(endpoint string, useragent string) {
