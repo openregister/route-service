@@ -51,7 +51,7 @@ func main() {
 	log.SetLevel(getLoggingLevel())
 
 	if trackingID = os.Getenv("GOOGLE_ANALYTICS_TRACKING_ID"); len(trackingID) == 0 {
-		log.Fatalln("expecting GOOGLE_ANALYTICS_TRACKING_ID to be set")
+		log.Warn("no GOOGLE_ANALYTICS_TRACKING_ID set, disabling API calls")
 	}
 
 	skipSSLValidation := getSkipValidation()
@@ -118,7 +118,9 @@ func reverseProxyDirectory(req *http.Request) {
 		log.Errorf("unable to compose resource url: %s", err)
 	}
 
-	go sendGARecord(endpoint, req.Header.Get(userAgentHeader))
+	if len(trackingID) != 0 {
+		go sendGARecord(endpoint, req.Header.Get(userAgentHeader))
+	}
 }
 
 func composeResourceURL(headers http.Header, u url.URL) (string, error) {
