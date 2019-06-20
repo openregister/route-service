@@ -158,11 +158,11 @@ func composeResourceURL(headers http.Header, u url.URL) (string, error) {
 	ext := path.Ext(u.Path)
 
 	switch ext {
-	case "json":
-	case "csv":
-	case "html":
-	case "tsv":
-	case "ttl":
+	case ".json":
+	case ".csv":
+	case ".html":
+	case ".tsv":
+	case ".ttl":
 		break
 	default:
 		return "", fmt.Errorf("unknown resource type: %s", u.Path)

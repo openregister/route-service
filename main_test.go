@@ -13,6 +13,7 @@ const (
 	httpsScheme = "https"
 
 	endpointJSON = "https://example.com/resource.json"
+	endpointHTML = "https://example.com/resource.html"
 	endpointCSV  = "https://example.com/resource.csv"
 )
 
@@ -21,10 +22,12 @@ var (
 )
 
 func TestComposeResourceURL(t *testing.T) {
+	acceptHTML := http.Header{}
 	acceptJSON := http.Header{}
 	acceptCSV := http.Header{}
 
 	acceptJSON.Set("Accept", "application/json")
+	acceptHTML.Set("Accept", "text/html")
 	acceptCSV.Set("Accept", "text/csv")
 
 	var cases = []struct {
@@ -36,6 +39,7 @@ func TestComposeResourceURL(t *testing.T) {
 		{url.URL{Scheme: httpScheme, Host: host, Path: "resource.json"}, headers, "http://example.com/resource.json"},
 		{url.URL{Scheme: httpsScheme, Host: host, Path: "resource.csv"}, headers, endpointCSV},
 		{url.URL{Scheme: httpsScheme, Host: host, Path: "resource"}, acceptJSON, endpointJSON},
+		{url.URL{Scheme: httpsScheme, Host: host, Path: "resource"}, acceptHTML, endpointHTML},
 		{url.URL{Scheme: httpsScheme, Host: host, Path: "resource"}, acceptCSV, endpointCSV},
 		{url.URL{Scheme: httpsScheme, Host: host, Path: "resource", RawQuery: "sort=name"}, acceptJSON, endpointJSON},
 		{url.URL{Scheme: httpsScheme, Host: host, Path: "resource", RawQuery: "sort=name"}, acceptCSV, endpointCSV},
