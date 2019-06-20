@@ -1,0 +1,10 @@
+---
+applications:
+- name: google-analytics-reporter
+  buildpack: go_buildpack
+  instances: 2
+  memory: 128M
+  env:
+    GOVERSION: go1.12
+    GOPACKAGENAME: github.com/openregister/route-service
+
