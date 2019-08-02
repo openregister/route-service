@@ -1,6 +1,6 @@
 ---
 applications:
-- name: google-analytics-reporter
+- name: route-service
   buildpack: go_buildpack
   instances: 2
   memory: 128M
